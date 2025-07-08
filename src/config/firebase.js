@@ -20,15 +20,15 @@ const app = initializeApp(firebaseConfig);
 // Initialize Cloud Firestore and get a reference to the service
 const db = getFirestore(app);
 
-// Only initialize analytics in browser environment
+// Initialize analytics only in browser environment
 let analytics = null;
 if (typeof window !== 'undefined') {
-  try {
-    const { getAnalytics } = await import("firebase/analytics");
-    analytics = getAnalytics(app);
-  } catch (error) {
+  // Dynamically import analytics only when needed
+  import("firebase/analytics").then((analyticsModule) => {
+    analytics = analyticsModule.getAnalytics(app);
+  }).catch((error) => {
     console.log('Analytics not available:', error);
-  }
+  });
 }
 
 export { db, analytics };
