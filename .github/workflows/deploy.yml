@@ -1,0 +1,128 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install Dependencies
+      run: npm install
+      env:
+        CI: false
+        
+    - name: Build Project
+      run: npm run build
+      env:
+        CI: false
+        
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
+        cname: yanchen184.github.io
+        
+    # Email notification on success
+    - name: Send Success Email
+      if: success() && github.ref == 'refs/heads/main'
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "✅ GitHub Actions 部署成功 - ${{ github.repository }}"
+        body: |
+          🎉 部署成功！
+          
+          專案: ${{ github.repository }}
+          分支: ${{ github.ref_name }}
+          提交: ${{ github.event.head_commit.message }}
+          提交者: ${{ github.actor }}
+          提交SHA: ${{ github.sha }}
+          
+          📱 線上演示: https://yanchen184.github.io/rock-paper-scissors/
+          📋 Actions 日誌: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          版本: v${{ steps.version.outputs.version }}
+          時間: ${{ steps.version.outputs.time }}
+        to: bobchen184@gmail.com
+        from: GitHub Actions
+        
+    # Email notification on failure
+    - name: Send Failure Email
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: "❌ GitHub Actions 部署失敗 - ${{ github.repository }}"
+        body: |
+          💥 部署失敗！
+          
+          專案: ${{ github.repository }}
+          分支: ${{ github.ref_name }}
+          提交: ${{ github.event.head_commit.message }}
+          提交者: ${{ github.actor }}
+          提交SHA: ${{ github.sha }}
+          
+          📋 Actions 日誌: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          🔍 請檢查錯誤日誌並修復問題
+          
+          時間: ${{ steps.version.outputs.time }}
+        to: bobchen184@gmail.com
+        from: GitHub Actions
+        
+    # Get version and timestamp
+    - name: Get Version Info
+      id: version
+      run: |
+        echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+        echo "time=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+
+  # Version bump job (only on main branch)
+  version-bump:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build-and-deploy
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+    - name: Bump Version
+      run: |
+        npm version patch -m "chore: bump version to %s [skip ci]"
+        git push --follow-tags
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
