@@ -1,6 +1,14 @@
 # 🪨📄✂️ Rock Paper Scissors Game
 
+![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Build Status](https://github.com/yanchen184/rock-paper-scissors/actions/workflows/deploy.yml/badge.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+
 一個使用 React 和 Firebase 建立的現代化猜拳遊戲。
+
+## 🔗 線上演示
+
+**[🎮 立即遊玩](https://yanchen184.github.io/rock-paper-scissors/)**
 
 ## ✨ 功能特點
 
@@ -12,13 +20,15 @@
 - 📈 **遊戲歷史** - 查看過往遊戲記錄和統計
 - 🎯 **篩選功能** - 依結果類型篩選遊戲歷史
 - 💾 **離線支援** - 網路中斷時仍可正常遊戲
+- 🚀 **自動部署** - GitHub Actions 自動部署到 GitHub Pages
 
 ## 🚀 技術棧
 
-- **前端**: React 19.1.0 + Vite
+- **前端**: React 19.1.0 + Vite 7.0.0
 - **資料庫**: Firebase Firestore
 - **樣式**: CSS3 + CSS Grid + Flexbox
-- **部署**: GitHub Pages (即將推送)
+- **部署**: GitHub Pages + GitHub Actions
+- **CI/CD**: 自動化測試和部署
 
 ## 🎯 遊戲規則
 
@@ -132,8 +142,22 @@ gameHistory: {
 1. 建構專案
 2. 部署到 gh-pages 分支
 3. 更新線上版本
+4. 發送 Email 通知部署結果
+
+### 部署設定
+
+- **主分支**: `main`
+- **部署分支**: `gh-pages`
+- **線上地址**: https://yanchen184.github.io/rock-paper-scissors/
+- **Email 通知**: 成功或失敗都會發送到 bobchen184@gmail.com
 
 ## 📝 更新日誌
+
+### v1.0.1 (2025-07-08)
+- 🚀 添加 GitHub Actions 自動部署
+- 📧 設置 Email 通知系統
+- 🔧 配置 CI/CD 環境
+- 📦 優化建構配置
 
 ### v1.0.0 (2025-07-08)
 - ✨ 初始版本發布
@@ -158,3 +182,5 @@ Yanchen - [GitHub](https://github.com/yanchen184)
 ---
 
 🎮 **開始遊戲，挑戰你的運氣和策略！**
+
+**[🎮 立即遊玩](https://yanchen184.github.io/rock-paper-scissors/)**
