@@ -12,11 +12,12 @@ export default defineConfig({
     sourcemap: true,
     // Optimize build
     minify: 'terser',
+    // Increase chunk size warning limit
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          firebase: ['firebase']
+          vendor: ['react', 'react-dom']
         }
       }
     }
@@ -28,5 +29,9 @@ export default defineConfig({
   preview: {
     port: 4173,
     host: true
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['firebase/app', 'firebase/firestore']
   }
 })
