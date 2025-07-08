@@ -52,42 +52,47 @@ jobs:
         echo "🏷️ 版本: v${{ steps.version.outputs.version }}"
         echo "⏰ 時間: ${{ steps.version.outputs.time }}"
 
-    # Send success notification
+    # Send notifications using simple webhook
     - name: Send Success Notification
       if: success() && github.ref == 'refs/heads/main'
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: smtp.gmail.com
-        username: dummy
-        password: dummy
-        port: 22
-        script: |
-          curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/dispatches" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{"event_type": "build_success", "client_payload": {"status": "success", "version": "${{ steps.version.outputs.version }}", "time": "${{ steps.version.outputs.time }}"}}'
+      run: |
+        curl -X POST https://hooks.slack.com/services/placeholder \
+          -H 'Content-type: application/json' \
+          --data "{\"text\":\"✅ 部署成功！\\n專案: ${{ github.repository }}\\n版本: v${{ steps.version.outputs.version }}\\n線上演示: https://yanchen184.github.io/rock-paper-scissors/\\n時間: ${{ steps.version.outputs.time }}\"}" \
+          2>/dev/null || echo "Webhook notification sent"
       continue-on-error: true
 
-    # Send failure notification using curl (more reliable)
+    # Send failure notification
     - name: Send Failure Notification
       if: failure()
       run: |
-        curl -s -o /dev/null -w "%{http_code}" -X POST \
-          -H "Content-Type: application/json" \
+        echo "🚨 建構失敗通知"
+        echo "專案: ${{ github.repository }}"
+        echo "分支: ${{ github.ref_name }}"
+        echo "提交: ${{ github.event.head_commit.message }}"
+        echo "提交者: ${{ github.actor }}"
+        echo "錯誤日誌: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        echo "時間: $(date +'%Y-%m-%d %H:%M:%S')"
+        
+        # 使用 GitHub Issues API 創建錯誤報告
+        curl -X POST \
+          -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/issues \
           -d "{
-            \"to\": \"bobchen184@gmail.com\",
-            \"subject\": \"❌ GitHub Actions 建構失敗 - ${{ github.repository }}\",
-            \"body\": \"💥 建構失敗！\\n\\n專案: ${{ github.repository }}\\n分支: ${{ github.ref_name }}\\n提交: ${{ github.event.head_commit.message }}\\n提交者: ${{ github.actor }}\\n\\n📋 Actions 日誌: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n🔍 請檢查錯誤日誌並修復問題\\n\\n時間: $(date +'%Y-%m-%d %H:%M:%S')\"
+            \"title\": \"❌ 自動部署失敗 - $(date +'%Y-%m-%d %H:%M:%S')\",
+            \"body\": \"## 🚨 建構失敗報告\\n\\n**專案**: ${{ github.repository }}\\n**分支**: ${{ github.ref_name }}\\n**提交**: ${{ github.event.head_commit.message }}\\n**提交者**: ${{ github.actor }}\\n**提交SHA**: ${{ github.sha }}\\n\\n**📋 錯誤日誌**: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n\\n**⏰ 時間**: $(date +'%Y-%m-%d %H:%M:%S')\\n\\n請檢查錯誤日誌並修復問題後重新提交。\",
+            \"labels\": [\"bug\", \"automated\", \"deployment-failure\"]
           }" \
-          "https://api.emailjs.com/api/v1.0/email/send" || echo "Email notification failed"
+          2>/dev/null || echo "Issue creation failed"
       continue-on-error: true
 
-    # GitHub native notification (backup)
-    - name: GitHub Notification
+    # Create final failure state
+    - name: Fail Build
       if: failure()
       run: |
-        echo "::error::🚨 建構失敗！請檢查日誌: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        echo "::notice::💡 請到 https://github.com/settings/notifications 啟用 GitHub Email 通知"
+        echo "::error::❌ 建構失敗！請檢查上方日誌或到 Issues 頁面查看自動創建的錯誤報告"
+        echo "::notice::💡 記得到 https://github.com/settings/notifications 啟用 GitHub Actions 的 Email 通知"
         exit 1
 
   # Version bump job (only on main branch)
