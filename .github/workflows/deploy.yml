@@ -52,6 +52,44 @@ jobs:
         echo "🏷️ 版本: v${{ steps.version.outputs.version }}"
         echo "⏰ 時間: ${{ steps.version.outputs.time }}"
 
+    # Send success notification
+    - name: Send Success Notification
+      if: success() && github.ref == 'refs/heads/main'
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: smtp.gmail.com
+        username: dummy
+        password: dummy
+        port: 22
+        script: |
+          curl -s -X POST "https://api.github.com/repos/${{ github.repository }}/dispatches" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d '{"event_type": "build_success", "client_payload": {"status": "success", "version": "${{ steps.version.outputs.version }}", "time": "${{ steps.version.outputs.time }}"}}'
+      continue-on-error: true
+
+    # Send failure notification using curl (more reliable)
+    - name: Send Failure Notification
+      if: failure()
+      run: |
+        curl -s -o /dev/null -w "%{http_code}" -X POST \
+          -H "Content-Type: application/json" \
+          -d "{
+            \"to\": \"bobchen184@gmail.com\",
+            \"subject\": \"❌ GitHub Actions 建構失敗 - ${{ github.repository }}\",
+            \"body\": \"💥 建構失敗！\\n\\n專案: ${{ github.repository }}\\n分支: ${{ github.ref_name }}\\n提交: ${{ github.event.head_commit.message }}\\n提交者: ${{ github.actor }}\\n\\n📋 Actions 日誌: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\\n🔍 請檢查錯誤日誌並修復問題\\n\\n時間: $(date +'%Y-%m-%d %H:%M:%S')\"
+          }" \
+          "https://api.emailjs.com/api/v1.0/email/send" || echo "Email notification failed"
+      continue-on-error: true
+
+    # GitHub native notification (backup)
+    - name: GitHub Notification
+      if: failure()
+      run: |
+        echo "::error::🚨 建構失敗！請檢查日誌: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        echo "::notice::💡 請到 https://github.com/settings/notifications 啟用 GitHub Email 通知"
+        exit 1
+
   # Version bump job (only on main branch)
   version-bump:
     runs-on: ubuntu-latest
