@@ -33,8 +33,10 @@ jobs:
     - name: Get Version Info
       id: version
       run: |
-        echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
-        echo "time=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_OUTPUT
+        VERSION=$(node -p "require('./package.json').version")
+        TIME=$(date +'%Y-%m-%d %H:%M:%S')
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "time=${TIME}" >> $GITHUB_OUTPUT
         
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
