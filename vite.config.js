@@ -10,14 +10,22 @@ export default defineConfig({
     assetsDir: 'assets',
     // Generate source maps for debugging
     sourcemap: true,
-    // Optimize build
+    // Use terser for minification (now included in devDependencies)
     minify: 'terser',
+    // Terser options for better compression
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
     // Increase chunk size warning limit
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom']
+          vendor: ['react', 'react-dom'],
+          firebase: ['firebase']
         }
       }
     }
