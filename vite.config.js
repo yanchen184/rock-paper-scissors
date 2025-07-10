@@ -25,7 +25,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          firebase: ['firebase']
+          firebase: ['firebase/app', 'firebase/firestore']
         }
       }
     }
@@ -38,8 +38,22 @@ export default defineConfig({
     port: 4173,
     host: true
   },
-  // Optimize dependencies
+  // Optimize dependencies and resolve Firebase modules properly
   optimizeDeps: {
-    include: ['firebase/app', 'firebase/firestore']
+    include: [
+      'firebase/app', 
+      'firebase/firestore',
+      'firebase/analytics'
+    ]
+  },
+  resolve: {
+    alias: {
+      // Fix Firebase compatibility issues with Vite
+      '@': '/src'
+    }
+  },
+  define: {
+    // Fix Firebase issues in production build
+    global: 'globalThis',
   }
 })
