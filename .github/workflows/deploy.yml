@@ -1,4 +1,4 @@
-name: Create Pages Site and Deploy
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -18,32 +18,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  setup-pages:
-    runs-on: ubuntu-latest
-    steps:
-    - name: Create Pages Site
-      uses: actions/github-script@v7
-      with:
-        script: |
-          try {
-            // Try to create the Pages site
-            await github.rest.repos.createPagesSite({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              build_type: 'workflow'
-            });
-            console.log('✅ Pages site created successfully');
-          } catch (error) {
-            if (error.status === 409) {
-              console.log('✅ Pages site already exists');
-            } else {
-              console.log('❌ Error creating Pages site:', error.message);
-              throw error;
-            }
-          }
-
   build-and-deploy:
-    needs: setup-pages
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -79,6 +54,8 @@ jobs:
         
     - name: Setup Pages
       uses: actions/configure-pages@v4
+      with:
+        enablement: true
         
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
