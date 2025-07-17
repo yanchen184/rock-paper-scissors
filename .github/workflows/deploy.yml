@@ -5,24 +5,16 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# Set permissions for GITHUB_TOKEN
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-  actions: read
+  contents: write
 
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued
 concurrency:
-  group: "pages"
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     
     steps:
     - name: Checkout Repository
@@ -52,19 +44,12 @@ jobs:
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "time=${TIME}" >> $GITHUB_OUTPUT
         
-    - name: Setup Pages
-      uses: actions/configure-pages@v4
-      with:
-        enablement: true
-        
-    - name: Upload artifact
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: './dist'
-        
     - name: Deploy to GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      uses: peaceiris/actions-gh-pages@v4
+      if: github.ref == 'refs/heads/main'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./dist
         
     - name: Deploy Status
       if: success()
