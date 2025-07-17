@@ -5,12 +5,11 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+# Set explicit permissions
 permissions:
   contents: write
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  pages: write
+  id-token: write
 
 jobs:
   deploy:
@@ -19,6 +18,8 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history
       
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -44,12 +45,22 @@ jobs:
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
         echo "time=${TIME}" >> $GITHUB_OUTPUT
         
+    - name: List build directory
+      run: |
+        echo "Build directory contents:"
+        ls -la dist/
+        
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v4
-      if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./dist
+        publish_branch: gh-pages
+        force_orphan: true
+        enable_jekyll: false
+        user_name: 'github-actions[bot]'
+        user_email: 'github-actions[bot]@users.noreply.github.com'
+        commit_message: 'Deploy ${{ steps.version.outputs.version }} to GitHub Pages'
         
     - name: Deploy Status
       if: success()
@@ -59,3 +70,4 @@ jobs:
         echo "📋 Actions 日誌: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         echo "🏷️ 版本: v${{ steps.version.outputs.version }}"
         echo "⏰ 時間: ${{ steps.version.outputs.time }}"
+        echo "🔗 gh-pages 分支: https://github.com/${{ github.repository }}/tree/gh-pages"
