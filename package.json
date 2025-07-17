@@ -1,7 +1,7 @@
 {
   "name": "rock-paper-scissors",
   "private": true,
-  "version": "1.0.8",
+  "version": "1.0.9",
   "type": "module",
   "homepage": "https://yanchen184.github.io/rock-paper-scissors",
   "scripts": {
